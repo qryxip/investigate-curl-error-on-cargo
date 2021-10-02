@@ -75,5 +75,6 @@ jobs:
           EOF
 
           cargo +${{ matrix.nightly-channel }} udeps || true
+        shell: bash
         env:
           CARGO_HTTP_MULTIPLEXING: ${{ matrix.cargo-http-multiplexing }}
