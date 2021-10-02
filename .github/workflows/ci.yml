@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cargo-udeps:
+    strategy:
+      fail-fast: false
+      matrix:
+        nightly-channel:
+          - nightly-2021-09-16
+          - nightly-2021-10-02
+
+    name: ${{ matrix.nightly-channel }}
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up `stable-x86_64-unknown-linux-gnu`
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Set up `${{ matrix.nightly-channel }}-x86_64-unknown-linux-gnu`
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.nightly-channel }}
+          profile: minimal
+
+      - name: Install cargo-udeps v0.1.23
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: stable
+          command: install
+          args: cargo-udeps --version =0.1.23 --locked
+
+      - name: Run cargo-udeps
+        run: |
+          cat >./Cargo.toml <<EOF
+          [package]
+          name = "investigate-curl-error-on-cargo"
+          version = "0.0.0"
+          edition = "2018"
+
+          [lib]
+          path = "/dev/null"
+
+          [dependencies]
+          reqwest = "0.11.4"
+          EOF
+
+          cargo +${{ matrix.nightly-channel }} udeps || true
